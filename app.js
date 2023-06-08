@@ -85,6 +85,7 @@ app.post("/", function(req, res){
         customList.find({ name: item_title })
           .then(response => {
             response[0].content.push(newItem);
+            response[0].save();
           });
     }
 //   }
