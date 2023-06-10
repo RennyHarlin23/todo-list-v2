@@ -1,8 +1,9 @@
-//jshint esversion:6
+
 
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -10,7 +11,9 @@ app.use(express.json({ limit: "1mb" }));
 main().catch(err => console.log(err));
 
 async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/todolistDB');
+  const uri = "mongodb+srv://admin:test123@cluster0.81arr57.mongodb.net/?retryWrites=true&w=majority";
+
+  await mongoose.connect(uri);
   console.log("Mongoose connected")
 }
 
@@ -46,7 +49,7 @@ app.get("/", function (req, res) {
   Item.find({})
     .then((response) => {
       if (response.length === 0) {
-        Item.insertMany(defaultItem).then(() => console.log("Successfully saved"));
+        Item.insertMany(defaultItem);
 
       }
     })
@@ -87,6 +90,7 @@ app.post("/", function(req, res){
             response[0].content.push(newItem);
             response[0].save();
           });
+    res.redirect("/" + item_title);
     }
 //   }
 });
@@ -96,14 +100,28 @@ app.get("/about", function(req, res){
   res.render("about");
 });
 
-app.listen(3000, function() {
+const port = process.env.PORT || 3000;
+app.listen(port, function() {
   console.log("Server started on port 3000");
 });
 
 app.post('/delete', (req, res) => {
   const checkedName = req.body.checkbox;
-  Item.deleteOne({ _id: checkedName }).then(() => res.redirect('/'));
-  })
+  const listName = req.body.listName;
+
+  if (listName === "Today") {
+    Item.deleteOne({ _id: checkedName }).then(() => res.redirect('/'));
+  }
+  else {
+    customList.findOneAndUpdate({ name: listName }, { $pull: { content: { _id: checkedName } } })
+      .then(() => {
+        res.redirect("/" + listName);
+      });
+
+   
+    }
+  }
+  )
 
 const customSchema = new mongoose.Schema({
   name: String,
@@ -112,16 +130,12 @@ const customSchema = new mongoose.Schema({
 
 const customList = mongoose.model("customList", customSchema);
 app.get("/:title", (req, res) => {
-  const title = req.params.title;
-
-
+  const title = _.capitalize(req.params.title);
   customList.findOne({ name: title })
     .then(response => {
       if (response) {
-        console.log("exists")
         res.render("list", { listTitle: response.name, newListItems: response.content})
       } else {
-        console.log("Does not exist")
         customList.create({ 
           name: title,
           content: defaultItem

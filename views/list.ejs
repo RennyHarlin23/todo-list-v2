@@ -14,10 +14,11 @@
      
 
       </div>
+      <input type="hidden" name="listName" value="<%=listTitle%>"></input>
     </form>
       <% } %>
       <form class="item" action="/" method="post">
-        <input type="text" name="newItem"  placeholder="New Item" autocomplete="off" required>
+        <input type="text" name="newItem"  placeholder="New Item" autocomplete="off" required autofocus>
         <button type="submit" name="list" value="<%=listTitle%>">+</button>
       </form>
   </div>
